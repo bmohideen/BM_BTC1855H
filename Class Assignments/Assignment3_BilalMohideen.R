@@ -1,4 +1,4 @@
-#Assignment 3 - Hangman
+#Assignment #3 - Hangman
 #Bilal Mohideen - BTC1855H
 #R Version 2024.04.1+748 (2024.04.1+748)
 
@@ -63,6 +63,7 @@ single_letter <- function(guess) {
 whole_word <- function(guess) {
   nchar(guess) > 1
 }
+
 #creating object to store individual letters of hidden_word 
 word_letters <- (strsplit(hidden_word, NULL)[[1]])
 
@@ -136,7 +137,8 @@ while (max_attempts > attempts) {
         #this is for guesses that are not in the word
         #adds an attempt (user is penalized)
         #adds to variable that stores user guesses under incorrect
-      } else {
+      } 
+      else {
         attempts <- attempts + 1
         incorrect <- c(incorrect, guess)
         cat("\nSorry, that letter is not in the word.\nYou have used", attempts,"out of 5 lives.
