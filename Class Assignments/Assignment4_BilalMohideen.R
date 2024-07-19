@@ -33,6 +33,9 @@ tail(ufo_data1)
 #summarizing the data set
 summary(ufo_data1)
 
+#filtering out duplicate entries
+ufo_data1 <- ufo_data1 %>% distinct()
+
 #checking for NA values in the key columns of interest
 #(country, shape, and duration.seconds)
 any(is.na(ufo_data1$country))
@@ -80,13 +83,51 @@ ufo_data1 <- ufo_data1 %>% filter(ufo_data1$shape != "")
 ufo_data1 <- ufo_data1 %>% filter(ufo_data1$duration.seconds > 1)
 ufo_data1 <- ufo_data1 %>% filter(ufo_data1$duration.seconds < 86400)
 
-#verify that missing values and outliers have been removed from each column
-view(ufo_data1$country)
-view(ufo_data1$shape)
-view(ufo_data1$duration.seconds)
+#to identify and remove hoax sightings:
+#screen for rows with "NUFORC Note:" appearing in comments
+ufo_data1 <- ufo_data1 %>% 
+  filter(!str_detect(ufo_data1$comments, pattern = "NUFORC Note:", 
+                     negate = FALSE))
 
+#to add a report_delay column
+#convert sighting's time to year-month-date-hour-minute format
+ufo_data1$datetime <- ymd_hm(ufo_data1$datetime)
 
+#convert date posted to day-month-year format
+ufo_data1$date_posted <- dmy(ufo_data1$date_posted)
 
+#confirm that sighting's time is in POSIXct structure
+str(ufo_data1$datetime)
 
+#convert date posted to POSIXct structure
+ufo_data1$date_posted <- as.POSIXct(ufo_data1$date_posted)
+
+#confirm that date posted is in POSIXct structure
+str(ufo_data1$date_posted)
+
+#calculate the time difference in days between date of sighting
+#and date it was reported
+report_delay <- difftime(ufo_data1$date_posted, ufo_data1$datetime, 
+                            units = c("days"))
+
+#adding new column to the data set
+ufo_data1 <- ufo_data1 %>% mutate(report_delay)
+
+#removing rows when sighting was reported before happening
+#anything with report delay less than 0 (negative) is filtered out
+ufo_data1 <- ufo_data1 %>% filter(report_delay >= 0)
+
+#creating table with average report_delay for each country
+mean_report_delay <- ufo_data1 %>% 
+  group_by(ufo_data1$country) %>%
+  summarize(mean_report_delay = mean(report_delay))
+
+#viewing the table for average report delay by country
+view(mean_report_delay)
+
+#creating histogram using the duration.seconds column
+#use log for better visualization
+hist(log(ufo_data1$duration.seconds), main = "Frequency of UFO Sightings",
+     xlab = "log Duration (seconds)", ylab = "Frequency of sightings")
 
 
